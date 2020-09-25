@@ -6,6 +6,7 @@
 //
 // INTERFACE
 //
+void initMDNS();
 void callback_mqtt(char* topic, byte* payload, unsigned int length);
 void subscribe_mqtt(PubSubClient &mqttClient);
 
@@ -107,7 +108,7 @@ void initWifi() {
       IPAddress subnet = IPAddress(config.subnet[0], config.subnet[1], config.subnet[2], config.subnet[3]);
       WiFi.config(ip, gateway, subnet);
     }
-    WiFi.hostname(DEVICE_TYPE);
+    WiFi.hostname(DEVICE_ID);
     WiFi.begin(config.ssid, config.passwd);
     WiFi.mode(WIFI_STA);
     // check the status of WiFi connection to be WL_CONNECTED

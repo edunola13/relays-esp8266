@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ESP8266WebServer.h>
 // #include <ESP8266WebServerSecure.h>
+#include <ESP8266mDNS.h>
 #include <EEPROM.h>
 #include <ArduinoJson.h>
 
@@ -10,8 +11,8 @@
 //#define WDT_TIME WDTO_8S
 // UUID -> Every provider assign a unique ID
 // It's the way to identify every device.
-#define DEVICE_ID "550e8400-e29b-41d4-a716-446655440001"
-#define DEVICE_TYPE "RELAYS_ESP"
+#define DEVICE_ID "6e0d871c-7b12-479d-aaa7-227e0e36ccc4"
+#define DEVICE_TYPE "RELAYS"
 #define DEVICE_VERSION "1"
 
 #define HTTP_REST_PORT 80
@@ -19,8 +20,8 @@
 #define MAX_WIFI_INIT_RETRY 20
 #define WIFI_REINTENT_AFTER_SETUP 1000*60*5  // 5 Minutes reintent if ssid is set
 #define MQTT_REINTENT_AFTER_SETUP 1000*60*1  // 1 Minutes reintent if ssid is set
-#define MQTT_CLIENT_PREFIX "CLIENT-"
-#define MQTT_CHANNEL_PREFIX "/device/"
+#define MQTT_CLIENT_PREFIX ""
+#define MQTT_CHANNEL_PREFIX "client/"
 
 #include <common_initial.h>
 #include "messages.h"
@@ -34,6 +35,7 @@
 #include "modules/relays.h"
 
 // Your Configuration
+#include "config/mdns.h"
 #include "config/mqtt.h"
 #include "config/memory.h"
 #include "config/controllers.h"
@@ -47,6 +49,8 @@ void setup(void) {
     loadConfig();
     // Inicializo WiFi
     initWifi();
+    // Inicializo MDNS
+    initMDNS();
 
     // Config rest server routing
     config_rest_server_routing();
@@ -55,6 +59,8 @@ void setup(void) {
 }
 
 void loop(void) {
+    MDNS.update();
+
     // Test WiFi Connection
     if (status.status != 'C' && String(config.ssid) != "") {
       reconnect_wifi();

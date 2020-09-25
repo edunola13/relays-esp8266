@@ -58,7 +58,6 @@ void callback_mqtt(char* topic, byte* payload, unsigned int length) {
       if (id >= 0 || id < sizeof(relays) / sizeof(Relay)) {
         bool on = rBuffer["on"];
         change_status_relay(relays[id], on);
-        Serial.println(on);
       }
     }
 
