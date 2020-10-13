@@ -91,6 +91,6 @@ void put_relay() {
 
     _response_relay(relays[id]);
 
-    publish_relays();
+    publish_relay(id);
   }
 }

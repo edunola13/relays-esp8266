@@ -5,15 +5,18 @@
 #include <EEPROM.h>
 #include <ArduinoJson.h>
 
-#define DOMO_DEBUG
+#define DOMO_DEBUG  // Comment for production
 #define DOMO_SPEED 9600
 //#define USE_WDT
 //#define WDT_TIME WDTO_8S
-// UUID -> Every provider assign a unique ID
+// UUID -> Every provider assign a unique ID and a SECRET
 // It's the way to identify every device.
 #define DEVICE_ID "6e0d871c-7b12-479d-aaa7-227e0e36ccc4"
+#define DEVICE_SECRET "SECRET_KEY"  // This secret is used to access to IOT Devices
 #define DEVICE_TYPE "RELAYS"
 #define DEVICE_VERSION "1"
+#define DEFAULT_NAME "Modulo de Relays"
+#define DEFAULT_APSSID "RelaysESP"  // Name and Password
 
 #define HTTP_REST_PORT 80
 #define WIFI_RETRY_DELAY 500
@@ -26,6 +29,7 @@
 #include <common_initial.h>
 #include "messages.h"
 // Dont touch this
+#include "core/constants.h"
 #include "core/config.h"
 #include "core/memory.h"
 #include "core/controllers.h"

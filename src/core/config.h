@@ -11,7 +11,7 @@ void callback_mqtt(char* topic, byte* payload, unsigned int length);
 void subscribe_mqtt(PubSubClient &mqttClient);
 
 struct Config {
-  char name[20] = "Modulo de Relays";
+  char name[20] = DEFAULT_NAME;
   char access_key[30] = "";
   char mq_server[15] = "";
   uint16_t mq_port = 1883;
@@ -20,8 +20,8 @@ struct Config {
 
   char ssid[30] = "";
   char passwd[30] = "";
-  char ap_ssid[20] = "RelaysESP";
-  char ap_passwd[20] = "RelaysESP";  // Min 8: dont work if <8
+  char ap_ssid[20] = DEFAULT_APSSID;
+  char ap_passwd[20] = DEFAULT_APSSID;  // Min 8: dont work if <8
 
   bool staticIp = false;
   uint8_t ip[4] = {192, 168, 0, 53};
@@ -30,7 +30,8 @@ struct Config {
 } config;
 
 struct ConfigStatus {
-  char status = 'I';  // I=Iniciando, C=Conectado, A=Access Point
+  bool sync = false;  // Set true if you need pass to sync mode, this define every device
+  char status = 'I';  // Status WiFi, I=Iniciando, C=Conectado, A=Access Point
   IPAddress ip;
   long lastWifiTime = 0;
   long lastMqttTime = 0;
@@ -108,9 +109,9 @@ void initWifi() {
       IPAddress subnet = IPAddress(config.subnet[0], config.subnet[1], config.subnet[2], config.subnet[3]);
       WiFi.config(ip, gateway, subnet);
     }
-    WiFi.hostname(DEVICE_ID);
-    WiFi.begin(config.ssid, config.passwd);
     WiFi.mode(WIFI_STA);
+    WiFi.hostname(DEVICE_TYPE);
+    WiFi.begin(config.ssid, config.passwd);
     // check the status of WiFi connection to be WL_CONNECTED
     while ((WiFi.status() != WL_CONNECTED) && (retries < MAX_WIFI_INIT_RETRY)) {
         retries++;

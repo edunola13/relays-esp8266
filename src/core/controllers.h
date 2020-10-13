@@ -12,6 +12,8 @@ void get_info();
 void get_config();
 void put_config();
 void post_config();
+void on_sync_mode();
+void off_sync_mode();
 
 void config_rest_server_routing() {
   /* SIN HTTPS */
@@ -24,6 +26,8 @@ void config_rest_server_routing() {
   http_rest_server.on("/config", HTTP_GET, get_config);  // Configuracion de Conexion y General
   http_rest_server.on("/config", HTTP_PUT, put_config);
   http_rest_server.on("/config", HTTP_POST, post_config);
+  http_rest_server.on("/sync", HTTP_POST, on_sync_mode);
+  http_rest_server.on("/sync", HTTP_DELETE, off_sync_mode);
   // http_rest_server.on('route', function);  // No filtra por METHOD -> despues pedir con http_rest_server.method()
 
   config_routing_modules(http_rest_server);
@@ -87,6 +91,28 @@ bool has_access() {
   return false;
 }
 
+void _response_info() {
+  StaticJsonDocument<250> jsonBuffer;
+  char JSONmessageBuffer[250];
+
+  // Status
+  // String(ESP.getChipId(), HEX);
+  jsonBuffer["device_id"] = String(DEVICE_ID);
+  // Define logic for dont send everytime the secret, only if it is in SyncMode
+  if (status.sync) {
+    jsonBuffer["secret"] = String(DEVICE_SECRET);
+  }
+  jsonBuffer["type"] = DEVICE_TYPE;
+  jsonBuffer["version"] = DEVICE_VERSION;
+  jsonBuffer["name"] = config.name;
+  jsonBuffer["actual_ip"] = status.ip.toString();
+  jsonBuffer["status"] = String(status.status);
+  jsonBuffer["sync"] = status.sync;
+
+  serializeJson(jsonBuffer, JSONmessageBuffer);
+  http_rest_server.send(200, "application/json", JSONmessageBuffer);
+}
+
 void _response_config() {
   StaticJsonDocument<750> jsonBuffer;
   char JSONmessageBuffer[750];
@@ -104,7 +130,7 @@ void _response_config() {
   jsonBuffer["passwd"] = config.passwd;
   jsonBuffer["ap_ssid"] = config.ap_ssid;
   jsonBuffer["ap_passwd"] = "****";
-  jsonBuffer["staticIp"] = config.staticIp;
+  jsonBuffer["static_ip"] = config.staticIp;
 
   JsonArray ipArray = jsonBuffer["ip"].to<JsonArray>();
   ipArray.add(config.ip[0]);
@@ -129,20 +155,7 @@ void _response_config() {
 }
 
 void get_info() {
-  StaticJsonDocument<250> jsonBuffer;
-  char JSONmessageBuffer[250];
-
-  // Status
-  String(ESP.getChipId(), HEX);
-  jsonBuffer["deviceId"] = String(DEVICE_ID);
-  jsonBuffer["type"] = DEVICE_TYPE;
-  jsonBuffer["version"] = DEVICE_VERSION;
-  jsonBuffer["name"] = config.name;
-  jsonBuffer["actualIp"] = status.ip.toString();
-  jsonBuffer["status"] = String(status.status);
-
-  serializeJson(jsonBuffer, JSONmessageBuffer);
-  http_rest_server.send(200, "application/json", JSONmessageBuffer);
+  _response_info();
 }
 
 void get_config() {
@@ -207,8 +220,8 @@ void put_config() {
         String value = jsonBuffer["ap_passwd"];
         value.toCharArray(config.ap_passwd, 20);
       }
-      if (jsonBuffer.containsKey("staticIp")) {
-        config.staticIp = jsonBuffer["staticIp"];//.as<bool*>();
+      if (jsonBuffer.containsKey("static_ip")) {
+        config.staticIp = jsonBuffer["static_ip"];//.as<bool*>();
       }
 
       if (jsonBuffer.containsKey("ip")) {
@@ -256,4 +269,22 @@ void post_config() {
 
   saveConfig();
   http_rest_server.send(200);
+}
+
+void on_sync_mode() {
+  if (! has_access()) {
+    return;
+  }
+
+  status.sync = true;
+  _response_info();
+}
+
+void off_sync_mode() {
+  if (! has_access()) {
+    return;
+  }
+
+  status.sync = false;
+  _response_info();
 }
